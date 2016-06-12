@@ -1,0 +1,5 @@
+move 250 250 0
+rotate y 35
+rotate x 40
+box -100 150 25 200 300 50
+display
