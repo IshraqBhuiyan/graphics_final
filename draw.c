@@ -36,13 +36,14 @@ void add_polygon( struct matrix *polygons,
   add_point(polygons, x2, y2, z2);
 }
 
-void scanline_convert(struct matrix *polygons, screen s, color c, int i){
+void scanline_convert(struct matrix *polygons, screen s, color c, float **z_buffer, int i){
 	printf("Drawing Polygon\n");
 	//draw_line(0, 0, 150, 150, s, c);
 	float x0, y0, z0, x1, y1, z1, x2, y2, z2;
 	float x_b, y_b, z_b, x_m, y_m, z_m, x_top, y_top, z_top;
 	float dx0, dx1, dx2, x0_curr, x1_curr, y_curr;
-	float x_min, x_max, y_min, y_max;
+	float x_min, x_max, y_min, y_max, z_min, z_max;
+	float dz0, dz1, dz2, z0_curr, z1_curr;
 	x0 = polygons->m[0][i];
 	x1 = polygons->m[0][i+1];
 	x2 = polygons->m[0][i+2];
@@ -68,9 +69,13 @@ void scanline_convert(struct matrix *polygons, screen s, color c, int i){
 			x_top = x2, y_top = y2, z_top = z1;
 			x0_curr = x_b;
 			x1_curr = x_m;
+			z0_curr = z_b;
+			z1_curr = z_m;
 			y_curr = y_b;
 			dx0 = (x_top-x_b)/(y_top-y_b);
 			dx1 = (x_top - x_m)/(y_top-y_m);
+			dz0 = (z_top-z_b)/(y_top-y_b);
+			dz1 = (z_top-z_m)/(y_top-y_m);
 		}else if(y2 == y1 && y2<y0){//bottom is horizontal
 			//printf("Bottom is horizontal and y0 > y2\n");
 			x_b = x2, y_b = y2, z_b = z2;
@@ -78,29 +83,41 @@ void scanline_convert(struct matrix *polygons, screen s, color c, int i){
 			x_top = x0, y_top = y0, z_top = z0;
 			x0_curr = x_b;
 			x1_curr = x_m;
+			z0_curr = z_b;
+			z1_curr = z_m;
 			y_curr = y_b;
 			//printf("x_top = %f, x_b = %f, y_top = %f, y_b = %f\n", x_top, x_b, y_top, y_b);
 			//printf("x_m = %f, y_m = %f\n", x_m, y_m);
 			dx0 = (x_top-x_b)/(y_top-y_b);
 			dx1 = (x_top-x_m)/(y_top-y_m);
+			dz0 = (z_top-z_b)/(y_top-y_b);
+			dz1 = (z_top-z_m)/(y_top-y_m);
 		}else if(y2 == y0 && y2 < y1){ //bottom is horizontal
 			x_b = x2, y_b = y2, z_b = z2;
 			x_m = x0, y_m = y0, z_m = z0;
 			x_top = x1, y_top = y1, z_top = z1;
 			x0_curr = x_b;
 			x1_curr = x_m;
+			z0_curr = z_b;
+			z1_curr = z_m;
 			y_curr = y_b;
 			dx0 = (x_top - x_b)/(y_top - y_b);
 			dx1 = (x_top - x_m)/(y_top - y_m);
+			dz0 = (z_top-z_b)/(y_top-y_b);
+			dz1 = (z_top-z_m)/(y_top-y_m);
 		}else if(y2 == y0 && y2 > y1){ //top is horizontal
 			x_b = x1, y_b = y1, z_b = z1;
 			x_m = x0, y_m = y0, z_m = z0;
 			x_top = x2, y_top = y2, z_top = z2;
 			x0_curr = x_b;
 			x1_curr = x_b;
+			z0_curr = z_b;
+			z1_curr = z_b;
 			y_curr = y_b;
 			dx0 = (x_top - x_b)/(y_top-y_b);
 			dx1 = (x_m - x_b)/(y_top-y_b);
+			dz0 = (z_top - z_b)/(y_top-y_b);
+			dz1 = (z_m - z_b)/(y_top-y_b);
 		}else if(y2==y1 && y2>y0){//top is horizontal
 			//printf("Top is horizontal and y2>y0\n");
 			x_b = x0, y_b = y0, z_b=z0;
@@ -108,9 +125,13 @@ void scanline_convert(struct matrix *polygons, screen s, color c, int i){
 			x_top = x2, y_top = y2, z_top = z2;
 			x0_curr = x_b;
 			x1_curr = x_b;
+			z0_curr = z_b;
+			z1_curr = z_b;
 			y_curr = y_b;
 			dx0 = (x_top-x_b)/(y_top-y_b);
 			dx1 = (x_m-x_b)/(y_top-y_b);
+			dz0 = (z_top-z_b)/(y_top-y_b);
+			dz1 = (z_m - z_b)/(y_top-y_b);
 		}else if(y0==y1 && y0>y2){//top is horizontal
 			//printf("Top is horizontal and y0 > y2\n");
 			x_b=x2, y_b = y2, z_b = z2;
@@ -118,9 +139,13 @@ void scanline_convert(struct matrix *polygons, screen s, color c, int i){
 			x_top = x0, y_top=y0, z_top=z0;
 			x0_curr = x_b;
 			x1_curr = x_b;
+			z0_curr = z_b;
+			z1_curr = z_b;
 			y_curr = y_b;
 			dx0 = (x_top-x_b)/(y_top-y_b);
 			dx1 = (x_m-x_b)/(y_top-y_b);
+			dz0 = (z_top-z_b)/(y_top-y_b);
+			dz1 = (z_m - z_b)/(y_top - y_b);
 		}
 		y_min = y_b;
 		y_max = y_top;
@@ -146,6 +171,28 @@ void scanline_convert(struct matrix *polygons, screen s, color c, int i){
 				x_min = x_b;
 			}
 		}
+		if(z_m >= z_b && z_m >= z_top){
+			z_max = z_m;
+			if(z_b < z_top){
+				z_min = z_b;
+			}else{
+				z_min = z_top;
+			}
+		}else if(z_b >= z_m && z_b >= z_top){
+			z_max = z_b;
+			if(z_m < z_top){
+				z_min = z_m;
+			}else{
+				z_min = z_top;
+			}
+		}else{
+			z_max = z_top;
+			if(z_m < z_b){
+				z_min = z_m;
+			}else{
+				z_min = z_b;
+			}
+		}
 		//printf("dx0 = %f, dx1 = %f\n", dx0, dx1);
 		while(y_curr <= y_top){
 			if(y_curr > y_max){
@@ -166,14 +213,29 @@ void scanline_convert(struct matrix *polygons, screen s, color c, int i){
 			if(x1_curr < x_min){
 				x1_curr = x_min;
 			}
+
+			if(z0_curr > z_max){
+				z0_curr = z_max;
+			}
+			if(z0_curr < z_min){
+				z0_curr = z_min;
+			}
+			if(z1_curr > z_max){
+				z1_curr = z_max;
+			}
+			if(z1_curr < z_min){
+				z1_curr = z_min;
+			}
 			color x;
 			x.green = 255;
 			x.blue = 0;
 			x.red = 0;
 			//printf("Drawing line: x0_curr = %f, x1_curr = %f, y_curr = %f\n", x0_curr, x1_curr, y_curr);
-			draw_line(x0_curr,y_curr, x1_curr, y_curr, s, c);
+			draw_line(x0_curr,y_curr, z0_curr, x1_curr, y_curr,z1_curr, s, c, z_buffer);
 			x0_curr += dx0;
 			x1_curr += dx1;
+			z0_curr += dz0;
+			z1_curr += dz1;
 			y_curr += 1;
 		}
 	}else{ //normal triangle
@@ -207,10 +269,15 @@ void scanline_convert(struct matrix *polygons, screen s, color c, int i){
 		}
 		x0_curr = x_b;
 		x1_curr = x_b;
+		z0_curr = z_b;
+		z1_curr = z_b;
 		y_curr = y_b;
 		dx0 = (x_top-x_b)/(y_top-y_b);
 		dx1 = (x_m - x_b)/(y_m - y_b);
 		dx2 = (x_top - x_m)/(y_top - y_m);
+		dz0 = (z_top-z_b)/(y_top-y_b);
+		dz1 = (z_m - z_b)/(y_m - y_b);
+		dz2 = (z_top - z_m)/(y_top-y_m);
 		printf("dx0 = %f, dx1 = %f, dx2=%f\n", dx0, dx1, dx2);
 		printf("y_curr = %f, y_m = %f, y_top = %f\n", y_curr, y_m, y_top);
 		y_min = y_b;
@@ -237,6 +304,30 @@ void scanline_convert(struct matrix *polygons, screen s, color c, int i){
 				x_min = x_b;
 			}
 		}
+
+		if(z_m >= z_b && z_m >= z_top){
+			z_max = z_m;
+			if(z_b < z_top){
+				z_min = z_b;
+			}else{
+				z_min = z_top;
+			}
+		}else if(z_b >= z_m && z_b >= z_top){
+			z_max = z_b;
+			if(z_m < z_top){
+				z_min = z_m;
+			}else{
+				z_min = z_top;
+			}
+		}else{
+			z_max = z_top;
+			if(z_m < z_b){
+				z_min = z_m;
+			}else{
+				z_min = z_b;
+			}
+		}
+
 		while(y_curr < y_m){
 			if(y_curr > y_max){
 				y_curr = y_max;
@@ -256,14 +347,29 @@ void scanline_convert(struct matrix *polygons, screen s, color c, int i){
 			if(x1_curr < x_min){
 				x1_curr = x_min;
 			}
+
+			if(z0_curr > z_max){
+				z0_curr = z_max;
+			}
+			if(z0_curr < z_min){
+				z0_curr = z_min;
+			}
+			if(z1_curr > z_max){
+				z1_curr = z_max;
+			}
+			if(z1_curr < z_min){
+				z1_curr = z_min;
+			}
 			//printf("First loop?\n");
 			color x;
 			x.red = 255;
 			x.blue = 0;
 			x.green = 0;
-			draw_line(x0_curr, y_curr, x1_curr,y_curr, s, c);
+			draw_line(x0_curr, y_curr,z0_curr, x1_curr,y_curr,z1_curr, s, c, z_buffer);
 			x0_curr +=dx0;
 			x1_curr +=dx1;
+			z0_curr +=dz0;
+			z1_curr +=dz1;
 			y_curr +=1;
 		}
 		printf("y_curr = %f\n", y_curr);
@@ -286,14 +392,29 @@ void scanline_convert(struct matrix *polygons, screen s, color c, int i){
 			if(x1_curr < x_min){
 				x1_curr = x_min;
 			}
+
+			if(z0_curr > z_max){
+				z0_curr = z_max;
+			}
+			if(z0_curr < z_min){
+				z0_curr = z_min;
+			}
+			if(z1_curr > z_max){
+				z1_curr = z_max;
+			}
+			if(z1_curr < z_min){
+				z1_curr = z_min;
+			}
 			//printf("Doing second loop?\n");
 			color x;
 			x.red = 0;
 			x.blue = 255;
 			x.green = 0;
-			draw_line(x0_curr,y_curr, x1_curr,y_curr, s, c);
+			draw_line(x0_curr,y_curr,z0_curr, x1_curr,y_curr,z1_curr, s, c, z_buffer);
 			x0_curr +=dx0;
 			x1_curr +=dx2;
+			z0_curr +=dz0;
+			z0_curr +=dz2;
 			y_curr +=1;
 		}
 	}
@@ -310,7 +431,7 @@ triangles
 04/16/13 13:13:27
 jdyrlandweaver
 ====================*/
-void draw_polygons( struct matrix *polygons, screen s, color c ) {
+void draw_polygons( struct matrix *polygons, screen s, color c, float **z_buffer ) {
 	color x = c;
   int i;
   for( i=0; i < polygons->lastcol-2; i+=3 ) {
@@ -319,7 +440,7 @@ void draw_polygons( struct matrix *polygons, screen s, color c ) {
 			x.blue = (x.blue + 15) % 256;
 			x.green = (x.green + 15) % 256;
 			x.red = (x.red + 15) % 256;
-			scanline_convert(polygons, s, x, i);
+			scanline_convert(polygons, s, x, z_buffer, i);
 			/*
       draw_line( polygons->m[0][i],
 		 polygons->m[1][i],
@@ -823,7 +944,7 @@ Returns:
 Go through points 2 at a time and call draw_line to add that line
 to the screen
 ====================*/
-void draw_lines( struct matrix * points, screen s, color c) {
+void draw_lines( struct matrix * points, screen s, color c, float **z_buffer) {
 
   int i;
 
@@ -835,8 +956,8 @@ void draw_lines( struct matrix * points, screen s, color c) {
 
   for ( i = 0; i < points->lastcol - 1; i+=2 ) {
 
-    draw_line( points->m[0][i], points->m[1][i],
-	       points->m[0][i+1], points->m[1][i+1], s, c);
+    draw_line( points->m[0][i], points->m[1][i],points->m[2][i],
+	       points->m[0][i+1], points->m[1][i+1],points->m[2][i+1], s, c, z_buffer);
     //FOR DEMONSTRATION PURPOSES ONLY
     //draw extra pixels so points can actually be seen
     /*
@@ -861,108 +982,121 @@ void draw_lines( struct matrix * points, screen s, color c) {
 }
 
 
-void draw_line(int x0, int y0, int x1, int y1, screen s, color c) {
+void draw_line(int x0, int y0, float z0, int x1, int y1, float z1, screen s, color c, float **z_buffer) {
 
-  int x, y, d, dx, dy;
+	int x, y, d, dx, dy;
+	float z, dz;
 
-  x = x0;
-  y = y0;
+	x = x0;
+	y = y0;
+	z = z0;
 
-  //swap points so we're always draing left to right
-  if ( x0 > x1 ) {
-    x = x1;
-    y = y1;
-    x1 = x0;
-    y1 = y0;
-  }
-
-  //need to know dx and dy for this version
-  dx = (x1 - x) * 2;
-  dy = (y1 - y) * 2;
-
-  //positive slope: Octants 1, 2 (5 and 6)
-  if ( dy > 0 ) {
-
-    //slope < 1: Octant 1 (5)
-    if ( dx > dy ) {
-      d = dy - ( dx / 2 );
-
-      while ( x <= x1 ) {
-	plot(s, c, x, y);
-
-	if ( d < 0 ) {
-	  x = x + 1;
-	  d = d + dy;
+	//swap points so we're always draing left to right
+	if ( x0 > x1 ) {
+		x = x1;
+		y = y1;
+		z = z1;
+		x1 = x0;
+		y1 = y0;
+		z1 = z0;
 	}
+
+	//need to know dx and dy for this version
+	dx = (x1 - x) * 2;
+	dy = (y1 - y) * 2;
+	dz = (z1-z)/sqrt(pow((x1-x), 2) + pow((y1-y), 2));
+
+	//positive slope: Octants 1, 2 (5 and 6)
+	if ( dy > 0 ) {
+
+		//slope < 1: Octant 1 (5)
+		if ( dx > dy ) {
+			d = dy - ( dx / 2 );
+
+			while ( x <= x1 ) {
+				plot(s, c, x, y, z, z_buffer);
+
+				if ( d < 0 ) {
+					x = x + 1;
+					z += dz;
+					d = d + dy;
+				}
+				else {
+					x = x + 1;
+					y = y + 1;
+					z += dz;
+					d = d + dy - dx;
+				}
+			}
+		}
+
+		//slope > 1: Octant 2 (6)
+		else {
+			d = ( dy / 2 ) - dx;
+			while ( y <= y1 ) {
+
+				plot(s, c, x, y, z, z_buffer );
+				if ( d > 0 ) {
+					y = y + 1;
+					z += dz;
+					d = d - dx;
+				}
+				else {
+					y = y + 1;
+					x = x + 1;
+					z +=dz;
+					d = d + dy - dx;
+				}
+			}
+		}
+	}
+
+	//negative slope: Octants 7, 8 (3 and 4)
 	else {
-	  x = x + 1;
-	  y = y + 1;
-	  d = d + dy - dx;
+
+		//slope > -1: Octant 8 (4)
+		if ( dx > abs(dy) ) {
+
+			d = dy + ( dx / 2 );
+
+			while ( x <= x1 ) {
+
+				plot(s, c, x, y, z, z_buffer);
+
+				if ( d > 0 ) {
+					x = x + 1;
+					z += dz;
+					d = d + dy;
+				}
+				else {
+					x = x + 1;
+					y = y - 1;
+					z += dz;
+					d = d + dy + dx;
+				}
+			}
+		}
+
+		//slope < -1: Octant 7 (3)
+		else {
+
+			d =  (dy / 2) + dx;
+
+			while ( y >= y1 ) {
+
+				plot(s, c, x, y, z, z_buffer );
+				if ( d < 0 ) {
+					y = y - 1;
+					z +=dz;
+					d = d + dx;
+				}
+				else {
+					y = y - 1;
+					x = x + 1;
+					z += dz;
+					d = d + dy + dx;
+				}
+			}
+		}
 	}
-      }
-    }
-
-    //slope > 1: Octant 2 (6)
-    else {
-      d = ( dy / 2 ) - dx;
-      while ( y <= y1 ) {
-
-	plot(s, c, x, y );
-	if ( d > 0 ) {
-	  y = y + 1;
-	  d = d - dx;
-	}
-	else {
-	  y = y + 1;
-	  x = x + 1;
-	  d = d + dy - dx;
-	}
-      }
-    }
-  }
-
-  //negative slope: Octants 7, 8 (3 and 4)
-  else {
-
-    //slope > -1: Octant 8 (4)
-    if ( dx > abs(dy) ) {
-
-      d = dy + ( dx / 2 );
-
-      while ( x <= x1 ) {
-
-	plot(s, c, x, y);
-
-	if ( d > 0 ) {
-	  x = x + 1;
-	  d = d + dy;
-	}
-	else {
-	  x = x + 1;
-	  y = y - 1;
-	  d = d + dy + dx;
-	}
-      }
-    }
-
-    //slope < -1: Octant 7 (3)
-    else {
-
-      d =  (dy / 2) + dx;
-
-      while ( y >= y1 ) {
-
-	plot(s, c, x, y );
-	if ( d < 0 ) {
-	  y = y - 1;
-	  d = d + dx;
-	}
-	else {
-	  y = y - 1;
-	  x = x + 1;
-	  d = d + dy + dx;
-	}
-      }
-    }
-  }
 }

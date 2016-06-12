@@ -4,7 +4,7 @@
   to get a working mdl project (for now).
 
   my_main.c will serve as the interpreter for mdl.
-  When an mdl script goes through a lexer and parser, 
+  When an mdl script goes through a lexer and parser,
   the resulting operations will be in the array op[].
 
   Your job is to go through each entry in op and perform
@@ -18,32 +18,32 @@
         over a specified interval
 
   set: set a knob to a given value
-  
+
   setknobs: set all knobs to a given value
 
   push: push a new origin matrix onto the origin stack
-  
+
   pop: remove the top matrix on the origin stack
 
-  move/scale/rotate: create a transformation matrix 
-                     based on the provided values, then 
+  move/scale/rotate: create a transformation matrix
+                     based on the provided values, then
 		     multiply the current top of the
 		     origins stack by it.
 
   box/sphere/torus: create a solid object based on the
-                    provided values. Store that in a 
+                    provided values. Store that in a
 		    temporary matrix, multiply it by the
 		    current top of the origins stack, then
 		    call draw_polygons.
 
-  line: create a line based on the provided values. Store 
+  line: create a line based on the provided values. Store
         that in a temporary matrix, multiply it by the
 	current top of the origins stack, then call draw_lines.
 
   save: call save_extension with the provided filename
 
   display: view the image live
-  
+
   jdyrlandweaver
   =========================*/
 
@@ -51,6 +51,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <float.h>
 #include "parser.h"
 #include "symtab.h"
 #include "y.tab.h"
@@ -63,13 +64,13 @@
 #include "stack.h"
 
 /*======== void first_pass()) ==========
-  Inputs:   
-  Returns: 
+  Inputs:
+  Returns:
 
   Checks the op array for any animation commands
   (frames, basename, vary)
-  
-  Should set num_frames and basename if the frames 
+
+  Should set num_frames and basename if the frames
   or basename commands are present
 
   If vary is found, but frames is not, the entire
@@ -91,12 +92,12 @@ void first_pass() {
   for( i=0; i<lastop; i++ ) {
 
     switch ( op[i].opcode ) {
-      
+
     case FRAMES:
       num_frames = op[i].op.frames.num_frames;
       frame_check = 1;
       break;
-      
+
     case BASENAME:
       strncpy( name, op[i].op.basename.p->name, sizeof( name ) );
       name_check = 1;
@@ -112,7 +113,7 @@ void first_pass() {
     printf( "Vary command found without setting number of frames!\n");
     exit( 0 );
   }
-  
+
   else if ( frame_check && !name_check ){
     printf("Animation code found but basename was not set, using \"frame\" as basename\n" );
     strncpy( name, "frame", sizeof( name ) );
@@ -120,7 +121,7 @@ void first_pass() {
 }
 
 /*======== struct vary_node ** second_pass()) ==========
-  Inputs:   
+  Inputs:
   Returns: An array of vary_node linked lists
 
   In order to set the knobs for animation, we need to keep
@@ -133,16 +134,16 @@ void first_pass() {
   node contains a knob name, a value, and a pointer to the
   next node.
 
-  Go through the opcode array, and when you find vary, go 
+  Go through the opcode array, and when you find vary, go
   from knobs[0] to knobs[frames-1] and add (or modify) the
   vary_node corresponding to the given knob with the
-  appropirate value. 
+  appropirate value.
 
   05/17/12 09:29:31
   jdyrlandweaver
   ====================*/
 struct vary_node ** second_pass() {
-  
+
   int i, k;
   double start_frame, end_frame, start_value, end_value;
   int count;
@@ -152,45 +153,45 @@ struct vary_node ** second_pass() {
   struct vary_node * new_node;
   struct vary_node * curr;
 
-  knobs = (struct vary_node **)calloc( num_frames, 
+  knobs = (struct vary_node **)calloc( num_frames,
 				       sizeof( struct vary_node * ) );
 
   for ( i=0; i<lastop; i++ ) {
-    
+
     if ( op[i].opcode == VARY ) {
-      
+
       start_frame = op[i].op.vary.start_frame;
       end_frame = op[i].op.vary.end_frame;
       start_value = op[i].op.vary.start_val;
       end_value = op[i].op.vary.end_val;
-      
-      if ( start_frame < 0 || 
-	   end_frame >= num_frames || 
+
+      if ( start_frame < 0 ||
+	   end_frame >= num_frames ||
 	   end_frame < start_frame ) {
 
-	printf( "Invalid vary command for knob: %s\n", 
+	printf( "Invalid vary command for knob: %s\n",
 		op[i].op.vary.p->name );
 	exit( 0 );
       }
-	
+
       //set knob values for each frame
       for ( k=0; k < num_frames; k++ ){
-	
+
 	found = 0;
 	new_node = knobs[k];
 	while ( new_node ) {
-	  
+
 	  if ( strcmp( new_node->name, op[i].op.vary.p->name) == 0 ) {
 	    found = 1;
 	    break;
 	  }
-	  
+
 	  new_node = new_node->next;
 	}
-	
+
 	if ( !found ) {
 	  new_node = (struct vary_node *)calloc(1, sizeof( struct vary_node));
-	  strncpy( new_node->name, op[i].op.vary.p->name, 
+	  strncpy( new_node->name, op[i].op.vary.p->name,
 		   sizeof( new_node-> name ) );
 	  new_node->next = knobs[k];
 	  knobs[k] = new_node;
@@ -202,19 +203,19 @@ struct vary_node ** second_pass() {
 	  new_node->value = start_value;
 	}
 	//if frame is after the knob, set knob to end value
-	else if ( !found && k > end_frame ) 
+	else if ( !found && k > end_frame )
 	  new_node->value = end_value;
 
 	else if ( k >= start_frame && k <= end_frame ) {
 	  if ( start_value < end_value ) {
 	    new_node->value = ( k - start_frame ) *
-	      (double)(end_value - start_value) / 
+	      (double)(end_value - start_value) /
 	      (double) (end_frame - start_frame) + start_value;
 	  }
-	  else 
-	    new_node->value = start_value - 
+	  else
+	    new_node->value = start_value -
 	      ( start_frame - k ) *
-	      (double)(end_value - start_value) / 
+	      (double)(end_value - start_value) /
 	      (double) (end_frame - start_frame);
 	}
       }
@@ -225,8 +226,8 @@ struct vary_node ** second_pass() {
 
 
 /*======== void print_knobs() ==========
-Inputs:   
-Returns: 
+Inputs:
+Returns:
 
 Goes through symtab and display all the knobs and their
 currnt values
@@ -234,7 +235,7 @@ currnt values
 jdyrlandweaver
 ====================*/
 void print_knobs() {
-  
+
   int i;
 
   printf( "ID\tNAME\t\tTYPE\t\tVALUE\n" );
@@ -250,8 +251,8 @@ void print_knobs() {
 }
 
 /*======== void process_knobs() ==========
-Inputs:   
-Returns: 
+Inputs:
+Returns:
 
 Displays the current knob values and provides
 an interface for the user to set them
@@ -259,7 +260,7 @@ an interface for the user to set them
 jdyrlandweaver
 ====================*/
 void process_knobs() {
-  
+
   int i;
   double v;
 
@@ -271,30 +272,30 @@ void process_knobs() {
     print_knobs();
     printf( "Enter knob ID to set (-1 to stop): ");
     scanf( "%d", &i );
-    
+
     if ( i >= lastsym || i < -1 )
       printf( "Invalid entry, please try again.\n" );
-    
+
     else if ( i != -1 ) {
-      
+
       printf( "Enter new value for %s: ", symtab[i].name );
       scanf( "%lf", &v );
       symtab[i].s.value = v;
     }
     printf("\n");
-    
+
   } while ( i != -1 );
 }
 
 
 /*======== void my_main() ==========
-  Inputs:   int polygons  
-  Returns: 
+  Inputs:   int polygons
+  Returns:
 
   This is the main engine of the interpreter, it should
   handle most of the commadns in mdl.
 
-  If frames is not present in the source (and therefore 
+  If frames is not present in the source (and therefore
   num_frames is 1, then process_knobs should be called.
 
   If frames is present, the enitre op array must be
@@ -304,11 +305,11 @@ void process_knobs() {
   files will be listed in order, then clear the screen and
   reset any other data structures that need it.
 
-  Important note: you cannot just name your files in 
+  Important note: you cannot just name your files in
   regular sequence, like pic0, pic1, pic2, pic3... if that
   is done, then pic1, pic10, pic11... will come before pic2
   and so on. In order to keep things clear, add leading 0s
-  to the numeric portion of the name. If you use sprintf, 
+  to the numeric portion of the name. If you use sprintf,
   you can use "%0xd" for this purpose. It will add at most
   x 0s in front of a number, if needed, so if used correctly,
   and x = 4, you would get numbers like 0001, 0002, 0011,
@@ -334,11 +335,20 @@ void my_main( int polygons ) {
 
   num_frames = 1;
   step = 5;
- 
+
   g.red = 0;
   g.green = 255;
   g.blue = 255;
 
+  float **z_buffer = (float **)calloc(XRES, sizeof(float *));
+  for(i=0;i<XRES;i++){
+      z_buffer[i] = (float *)calloc(YRES, sizeof(float));
+  }
+  for(i=0;i<XRES;i++){
+    for(j=0;j<YRES;j++){
+      z_buffer[i][j] = -1 * DBL_MAX;
+    }
+  }
 
   first_pass();
 
@@ -346,7 +356,7 @@ void my_main( int polygons ) {
     process_knobs();
   else
     knobs = second_pass();
-  
+
   for ( f=0; f < num_frames; f++ ) {
 
     s = new_stack();
@@ -355,7 +365,7 @@ void my_main( int polygons ) {
 
     //if there are multiple frames, set the knobs
     if ( num_frames > 1 ) {
-      
+
       vn = knobs[f];
       while ( vn ) {
 	printf("knob: %s value:%lf\n", vn->name, vn->value);
@@ -363,18 +373,18 @@ void my_main( int polygons ) {
 	vn = vn-> next;
       }
     }
-    
+
     for (i=0;i<lastop;i++) {
-  
+
       switch (op[i].opcode) {
 
       case SET:
-	set_value( lookup_symbol( op[i].op.set.p->name ), 
+	set_value( lookup_symbol( op[i].op.set.p->name ),
 		   op[i].op.set.p->s.value );
 	break;
-	
+
       case SETKNOBS:
-	for ( j=0; j < lastsym; j++ ) 
+	for ( j=0; j < lastsym; j++ )
 	  if ( symtab[j].type == SYM_VALUE )
 	    symtab[j].s.value = op[i].op.setknobs.value;
 	break;
@@ -387,7 +397,7 @@ void my_main( int polygons ) {
 		    step);
 	//apply the current top origin
 	matrix_mult( s->data[ s->top ], tmp );
-	draw_polygons( tmp, t, g );
+	draw_polygons( tmp, t, g, z_buffer );
 	tmp->lastcol = 0;
 	break;
 
@@ -399,7 +409,7 @@ void my_main( int polygons ) {
 		   op[i].op.torus.r1,
 		   step);
 	matrix_mult( s->data[ s->top ], tmp );
-	draw_polygons( tmp, t, g );
+	draw_polygons( tmp, t, g, z_buffer );
 	tmp->lastcol = 0;
 	break;
 
@@ -411,7 +421,7 @@ void my_main( int polygons ) {
 		 op[i].op.box.d1[1],
 		 op[i].op.box.d1[2]);
 	matrix_mult( s->data[ s->top ], tmp );
-	draw_polygons( tmp, t, g );
+	draw_polygons( tmp, t, g, z_buffer );
 	tmp->lastcol = 0;
 	break;
 
@@ -422,7 +432,7 @@ void my_main( int polygons ) {
 		  op[i].op.line.p1[0],
 		  op[i].op.line.p1[1],
 		  op[i].op.line.p1[1]);
-	draw_lines( tmp, t, g );
+	draw_lines( tmp, t, g, z_buffer );
 	tmp->lastcol = 0;
 	break;
 
@@ -431,7 +441,7 @@ void my_main( int polygons ) {
 	xval = op[i].op.move.d[0];
 	yval =  op[i].op.move.d[1];
 	zval = op[i].op.move.d[2];
-      
+
 	//get knob if it exists
 	if ( op[i].op.move.p != NULL ) {
 	  knob_value = lookup_symbol( op[i].op.move.p->name )->s.value;
@@ -452,7 +462,7 @@ void my_main( int polygons ) {
 	xval = op[i].op.scale.d[0];
 	yval = op[i].op.scale.d[1];
 	zval = op[i].op.scale.d[2];
-      
+
 	//get knob if it exists
 	if ( op[i].op.scale.p != NULL ) {
 	  knob_value = lookup_symbol( op[i].op.scale.p->name )->s.value;
@@ -478,11 +488,11 @@ void my_main( int polygons ) {
 	}
 
 	//get the axis
-	if ( op[i].op.rotate.axis == 0 ) 
+	if ( op[i].op.rotate.axis == 0 )
 	  transform = make_rotX( xval );
-	else if ( op[i].op.rotate.axis == 1 ) 
+	else if ( op[i].op.rotate.axis == 1 )
 	  transform = make_rotY( xval );
-	else if ( op[i].op.rotate.axis == 2 ) 
+	else if ( op[i].op.rotate.axis == 2 )
 	  transform = make_rotZ( xval );
 
 	matrix_mult( s->data[ s->top ], transform );
@@ -505,11 +515,11 @@ void my_main( int polygons ) {
 	break;
       }
     }
-  
+
     free_stack( s );
     free_matrix( tmp );
     //free_matrix( transform );
- 
+
     //save the image with the correct filename
     if ( num_frames > 1 ) {
       printf("Drawing frome: %d\n", f );
