@@ -1,6 +1,11 @@
+frames 2
+push
 move 250 250 0
-rotate y 35
-rotate x 40
-sphere 0 0 50 50
-sphere 0 0 0 50
+rotate y 50
+rotate x 50
+scale 4 4 4
+box 10 20 30 40 50 60
+pop
+move 250 250 0
+sphere 0 0 0 100
 display
