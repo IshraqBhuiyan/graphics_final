@@ -62,6 +62,7 @@
 #include "display.h"
 #include "draw.h"
 #include "stack.h"
+#include "light.h"
 
 /*======== void first_pass()) ==========
   Inputs:
@@ -332,6 +333,24 @@ void my_main( int polygons ) {
   struct vary_node **knobs;
   struct vary_node *vn;
   char frame_name[128];
+  //int *ambience = (int *)calloc(3, sizeof(int));
+  struct point_light *light;
+  light = (struct point_light *)calloc(1, sizeof(struct point_light));
+  struct r_properties *properties;
+  properties = (struct r_properties *)calloc(1, sizeof(struct r_properties));
+  properties->ka = (float *)calloc(3, sizeof(float));
+  properties->kd = (float *)calloc(3, sizeof(float));
+  properties->ks = (float *)calloc(3, sizeof(float));
+  light->color = (int *)calloc(3, sizeof(int));
+  light->point = (float *)calloc(3, sizeof(float));
+  for(i=0;i<3;i++){
+    light->color[i] = 100;
+    light->point[i] = 100;
+    printf("Here %d\n", i);
+    properties->ka[i] = 0.33;
+    properties->kd[i] = 0.33;
+    properties->ks[i] = 0.34;
+  }
 
   num_frames = 1;
   step = 5;
@@ -381,15 +400,40 @@ void my_main( int polygons ) {
         vn = vn-> next;
       }
     }
-
+    printf("Here\n");
     for (i=0;i<lastop;i++) {
 
       switch (op[i].opcode) {
 
+      case CONSTANTS:
+        for(j=0; j<lastsym;j++){
+          if(symtab[j].type == SYM_CONSTANTS){
+            int as = 0;
+            for(as = 0; as<3;as++){
+              properties->ka[as] = symtab[j].s.c->r[as];
+              properties->kd[as] = symtab[j].s.c->g[as];
+              properties->ks[as] = symtab[j].s.c->b[as];
+            }
+          }
+        }
+        break;
+
+      case LIGHT:
+        for(j = 0;j<lastsym;j++){
+          if(symtab[j].type == SYM_LIGHT){
+            int as = 0;
+            for(as=0;as<3;as++){
+              light->color[as] = symtab[j].s.l->c[as];
+              light->point[as] = symtab[j].s.l->l[as];
+            }
+          }
+        }
+        break;
+
       case SET:
-      set_value( lookup_symbol( op[i].op.set.p->name ),
-        op[i].op.set.p->s.value );
-	    break;
+        set_value( lookup_symbol( op[i].op.set.p->name ),
+          op[i].op.set.p->s.value );
+	      break;
 
       case SETKNOBS:
         for ( j=0; j < lastsym; j++ )
@@ -405,7 +449,7 @@ void my_main( int polygons ) {
       		    step);
       	//apply the current top origin
       	matrix_mult( s->data[ s->top ], tmp );
-      	draw_polygons( tmp, t, g, z_buffer );
+      	draw_polygons( tmp, t, g, z_buffer, light, properties );
       	tmp->lastcol = 0;
       	break;
 
@@ -417,7 +461,7 @@ void my_main( int polygons ) {
       		   op[i].op.torus.r1,
       		   step);
       	matrix_mult( s->data[ s->top ], tmp );
-      	draw_polygons( tmp, t, g, z_buffer );
+      	draw_polygons( tmp, t, g, z_buffer, light, properties );
       	tmp->lastcol = 0;
       	break;
 
@@ -429,7 +473,7 @@ void my_main( int polygons ) {
       		 op[i].op.box.d1[1],
       		 op[i].op.box.d1[2]);
       	matrix_mult( s->data[ s->top ], tmp );
-      	draw_polygons( tmp, t, g, z_buffer );
+      	draw_polygons( tmp, t, g, z_buffer, light, properties );
       	tmp->lastcol = 0;
       	break;
 
@@ -440,7 +484,7 @@ void my_main( int polygons ) {
       		  op[i].op.line.p1[0],
       		  op[i].op.line.p1[1],
       		  op[i].op.line.p1[1]);
-      	draw_lines( tmp, t, g, z_buffer );
+      	draw_lines( tmp, t, g, z_buffer);
       	tmp->lastcol = 0;
       	break;
 

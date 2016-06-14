@@ -7,6 +7,7 @@
 #include "draw.h"
 #include "matrix.h"
 #include "gmath.h"
+#include "light.h"
 
 /*======== void add_polygon() ==========
 Inputs:   struct matrix *surfaces
@@ -431,15 +432,17 @@ triangles
 04/16/13 13:13:27
 jdyrlandweaver
 ====================*/
-void draw_polygons( struct matrix *polygons, screen s, color c, float **z_buffer ) {
-	color x = c;
+void draw_polygons( struct matrix *polygons, screen s, color c, float **z_buffer, struct point_light *light_source, struct r_properties *properties ) {
+	//color x = c;
   int i;
   for( i=0; i < polygons->lastcol-2; i+=3 ) {
 
     if ( calculate_dot( polygons, i ) < 0 ) {
-			x.blue = (x.blue + 15) % 256;
-			x.green = (x.green + 15) % 256;
-			x.red = (x.red + 15) % 256;
+			//x.blue = (x.blue + 15) % 256;
+			//x.green = (x.green + 15) % 256;
+			//x.red = (x.red + 15) % 256;
+			color x;
+			x = find_light(polygons, light_source, properties, i);
 			scanline_convert(polygons, s, x, z_buffer, i);
 			/*
       draw_line( polygons->m[0][i],

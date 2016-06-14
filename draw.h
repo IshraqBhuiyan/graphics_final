@@ -2,6 +2,7 @@
 #define DRAW_H
 
 #include "matrix.h"
+#include "light.h"
 
 #define MAX_STEPS 100
 
@@ -18,7 +19,7 @@ void add_polygons( struct matrix * points,
 		   double x1, double y1, double z1,
 		   double x2, double y2, double z2);
 void draw_lines( struct matrix * points, screen s, color c, float **z_buffer);
-void draw_polygons( struct matrix * points, screen s, color c, float **z_buffer);
+void draw_polygons( struct matrix * points, screen s, color c, float **z_buffer, struct point_light *light_source, struct r_properties *properties);
 
 //advanced shapes
 void add_circle( struct matrix * points,

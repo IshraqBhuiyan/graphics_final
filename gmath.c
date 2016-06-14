@@ -13,16 +13,16 @@
 	    double az
 	    double bx
 	    double by
-	    double bz  
-  Returns: A double arry of size 3 representing the 
+	    double bz
+  Returns: A double arry of size 3 representing the
            cross product of <ax, ay, az> and <bx, by, bz>
 
   04/17/12 16:46:30
   jonalf
   ====================*/
-double * calculate_normal( double ax, double ay, double az,	
+double * calculate_normal( double ax, double ay, double az,
 			   double bx, double by, double bz ) {
-  
+
   double *normal;
   normal = (double *)malloc(3 * sizeof(double));
 
@@ -33,14 +33,23 @@ double * calculate_normal( double ax, double ay, double az,
   return normal;
 }
 
+float * normalize(float *v){
+	float length = sqrt(v[0] * v[0] + v[1] *v[1] + v[2] * v[2]);
+	float *nv = (float *)calloc(3, sizeof(double));
+	int i = 0;
+	for(i = 0; i<3; i++){
+		nv[i] = v[i]/length;
+	}
+	return nv;
+}
 /*======== double calculate_dot() ==========
   Inputs:   struct matrix *points
-            int i  
+            int i
   Returns: The dot product of a surface normal and
            a view vector
-  
+
   calculates the dot product of the surface normal to
-  triangle points[i], points[i+1], points[i+2] and a 
+  triangle points[i], points[i+1], points[i+2] and a
   view vector (use <0, 0, -1> to start.
 
   04/17/12 16:38:34
@@ -73,6 +82,48 @@ double calculate_dot( struct matrix *points, int i ) {
   //calculate dot product
   dot = normal[0] * vx + normal[1] * vy + normal[2] * vz;
 
-  free(normal);  
+  free(normal);
   return dot;
+}
+
+float dot_product(float *p1, float *p2){
+	return p1[0] * p2[0] + p1[1]*p2[1] + p1[2]*p2[2];
+}
+
+float *scalar_multiply(float *p1, float p2){
+	float *scal = (float *)calloc(3, sizeof(double));
+	int i = 0;
+	for(i=0;i<3;i++){
+		scal[i] = p1[i] * p2;
+	}
+	return scal;
+}
+
+double *surface_normal(struct matrix *points, int i){
+	double ax, ay, az, bx, by, bz;
+  double *normal;
+  double vx, vy, vz;
+  double dot;
+
+  //calculate A and B vectors
+  ax = points->m[0][i+1] - points->m[0][i];
+  ay = points->m[1][i+1] - points->m[1][i];
+  az = points->m[2][i+1] - points->m[2][i];
+
+  bx = points->m[0][i+2] - points->m[0][i];
+  by = points->m[1][i+2] - points->m[1][i];
+  bz = points->m[2][i+2] - points->m[2][i];
+
+  //get the surface normal
+  normal = calculate_normal( ax, ay, az, bx, by, bz );
+	return normal;
+}
+
+float *vector_subtract(float *p1, float *p2){
+	float *res = (float *)calloc(3, sizeof(double));
+	int i = 0;
+	for(i=0;i<3;i++){
+		res[i] = p1[i] - p2[i];
+	}
+	return res;
 }
