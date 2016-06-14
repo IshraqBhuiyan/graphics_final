@@ -33,9 +33,9 @@ double * calculate_normal( double ax, double ay, double az,
   return normal;
 }
 
-float * normalize(float *v){
-	float length = sqrt(v[0] * v[0] + v[1] *v[1] + v[2] * v[2]);
-	float *nv = (float *)calloc(3, sizeof(double));
+double * normalize(double *v){
+	double length = sqrt(v[0] * v[0] + v[1] *v[1] + v[2] * v[2]);
+	double *nv = (double *)calloc(3, sizeof(double));
 	int i = 0;
 	for(i = 0; i<3; i++){
 		nv[i] = v[i]/length;
@@ -86,12 +86,12 @@ double calculate_dot( struct matrix *points, int i ) {
   return dot;
 }
 
-float dot_product(float *p1, float *p2){
+double dot_product(double *p1, double *p2){
 	return p1[0] * p2[0] + p1[1]*p2[1] + p1[2]*p2[2];
 }
 
-float *scalar_multiply(float *p1, float p2){
-	float *scal = (float *)calloc(3, sizeof(double));
+double *scalar_multiply(double *p1, double p2){
+	double *scal = (double *)calloc(3, sizeof(double));
 	int i = 0;
 	for(i=0;i<3;i++){
 		scal[i] = p1[i] * p2;
@@ -119,8 +119,8 @@ double *surface_normal(struct matrix *points, int i){
 	return normal;
 }
 
-float *vector_subtract(float *p1, float *p2){
-	float *res = (float *)calloc(3, sizeof(double));
+double *vector_subtract(double *p1, double *p2){
+	double *res = (double *)calloc(3, sizeof(double));
 	int i = 0;
 	for(i=0;i<3;i++){
 		res[i] = p1[i] - p2[i];

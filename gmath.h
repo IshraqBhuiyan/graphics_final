@@ -7,13 +7,13 @@ double * calculate_normal( double a1, double a2, double a3,
 			   double b1, double b2, double b3 );
 double calculate_dot( struct matrix *points, int i );
 
-float *normalize(float *v);
+double *normalize(double *v);
 
-float dot_product(float *p1, float *p2);
+double dot_product(double *p1, double *p2);
 
-float *scalar_multiply(float *p1, float p2);
+double *scalar_multiply(double *p1, double p2);
 
 double *surface_normal(struct matrix *points, int i);
 
-float *vector_subtract(float *p1, float *p2);
+double *vector_subtract(double *p1, double *p2);
 #endif
